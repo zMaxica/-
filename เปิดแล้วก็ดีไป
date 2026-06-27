@@ -6,26 +6,20 @@ local player = Players.LocalPlayer
 
 
 local Zones = {
-    CFrame.new(
-        487.373779, 203.465652, -3196.83691,
+    CFrame.new(487.373779, 203.465652, -3196.83691,
         0.707134247, 0, 0.707079291,
         0, 1, 0,
-        -0.707079291, 0, 0.707134247
-    ),
+        -0.707079291, 0, 0.707134247),
 
-    CFrame.new(
-        510.001251, 203.465652, -3219.46436,
+    CFrame.new(510.001251, 203.465652, -3219.46436,
         0.707134247, 0, 0.707079291,
         0, 1, 0,
-        -0.707079291, 0, 0.707134247
-    ),
+        -0.707079291, 0, 0.707134247),
 
-    CFrame.new(
-        532.346375, 203.465652, -3241.80933,
+    CFrame.new(532.346375, 203.465652, -3241.80933,
         0.707134247, 0, 0.707079291,
         0, 1, 0,
-        -0.707079291, 0, 0.707134247
-    )
+        -0.707079291, 0, 0.707134247)
 }
 
 
@@ -78,10 +72,11 @@ local function clickButton(btn)
 end
 
 
--- 🔥 รอ UI ขึ้นจริง
-local function WaitForRaidUI()
+local function WaitForRaidUI(timeout)
     local t = 0
-    while t < 10 do
+    timeout = timeout or 10
+
+    while t < timeout do
         local raid = player:FindFirstChild("PlayerGui")
             and player.PlayerGui:FindFirstChild("Main")
             and player.PlayerGui.Main:FindFirstChild("Func")
@@ -99,43 +94,59 @@ local function WaitForRaidUI()
 end
 
 
-while task.wait(0.1) do
+-- 🔥 MAIN LOOP + RETRY 30s
+while true do
 
-    for i, zone in ipairs(Zones) do
+    local success = false
+    local startTime = os.clock()
 
-        if not IsZoneOccupied(zone) then
+    while os.clock() - startTime < 30 do
 
-            print("เจอห้องว่าง Zone", i)
+        for i, zone in ipairs(Zones) do
 
-            Teleport(zone)
+            if not IsZoneOccupied(zone) then
 
-            local raid = WaitForRaidUI()
+                print("เจอห้องว่าง Zone", i)
 
-            if raid then
-                task.wait(1.5)
+                Teleport(zone)
 
-                local nightmareBtn = raid.Content.Panel.Outline.Chrono.ContentButten.Button:FindFirstChild("Nightmare")
-                local startBtn = raid.Content.Panel.Outline.Stats.Outline:FindFirstChild("Start")
+                local raid = WaitForRaidUI(5)
 
-                if nightmareBtn then
-                    print("กด Nightmare")
-                    clickButton(nightmareBtn)
+                if raid then
+                    task.wait(1.5)
+
+                    local nightmareBtn = raid.Content.Panel.Outline.Chrono.ContentButten.Button:FindFirstChild("Nightmare")
+                    local startBtn = raid.Content.Panel.Outline.Stats.Outline:FindFirstChild("Start")
+
+                    if nightmareBtn then
+                        print("กด Nightmare")
+                        clickButton(nightmareBtn)
+                    end
+
+                    task.wait(0.5)
+
+                    if startBtn then
+                        print("กด Start")
+                        clickButton(startBtn)
+                    end
+
+                    success = true
+                    break
+                else
+                    print("UI ไม่ขึ้น")
                 end
 
-                task.wait(0.5)
-
-                if startBtn then
-                    print("กด Start")
-                    clickButton(startBtn)
-                end
-
-            else
-                print("UI ไม่ขึ้น")
+                return
             end
-
-            return
         end
+
+        task.wait(0.2)
     end
 
-    print("เต็มทั้ง 3 โซน รอ...")
+    if not success then
+        print("⏱ 30 วิยังไม่สำเร็จ → เริ่มใหม่")
+    else
+        print("✅ สำเร็จแล้ว ออกจาก loop")
+        break
+    end
 end
