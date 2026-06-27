@@ -36,18 +36,14 @@ local function IsZoneOccupied(zoneCFrame)
         if obj.Name == "MatchZoneBlocker" then
 
             local pos
-
             if obj:IsA("BasePart") then
                 pos = obj.Position
-
             elseif obj:IsA("Model") and obj.PrimaryPart then
                 pos = obj.PrimaryPart.Position
             end
 
-            if pos then
-                if (pos - zonePos).Magnitude < 5 then
-                    return true
-                end
+            if pos and (pos - zonePos).Magnitude < 5 then
+                return true
             end
         end
     end
@@ -66,11 +62,8 @@ local function Teleport(cframe)
 end
 
 
--- 🖱️ ฟังก์ชันกดปุ่ม
 local function clickButton(btn)
     if not btn then return end
-
-    task.wait(0.2)
 
     local position = btn.AbsolutePosition
     local size = btn.AbsoluteSize
@@ -85,6 +78,27 @@ local function clickButton(btn)
 end
 
 
+-- 🔥 รอ UI ขึ้นจริง
+local function WaitForRaidUI()
+    local t = 0
+    while t < 10 do
+        local raid = player:FindFirstChild("PlayerGui")
+            and player.PlayerGui:FindFirstChild("Main")
+            and player.PlayerGui.Main:FindFirstChild("Func")
+            and player.PlayerGui.Main.Func:FindFirstChild("Raid")
+
+        if raid and raid.Visible == true then
+            return raid
+        end
+
+        task.wait(0.05)
+        t += 0.05
+    end
+
+    return nil
+end
+
+
 while task.wait(0.1) do
 
     for i, zone in ipairs(Zones) do
@@ -95,24 +109,28 @@ while task.wait(0.1) do
 
             Teleport(zone)
 
-            task.wait(3) -- รอ UI โหลด
+            local raid = WaitForRaidUI()
 
-            -- 🎯 UI Nightmare
-            local nightmareBtn = player.PlayerGui.Main.Func.Raid.Content.Panel.Outline.Chrono.ContentButten.Button.Nightmare
+            if raid then
+                task.wait(1.5)
 
-            -- ▶️ UI Start
-            local startBtn = player.PlayerGui.Main.Func.Raid.Content.Panel.Outline.Stats.Outline.Start
+                local nightmareBtn = raid.Content.Panel.Outline.Chrono.ContentButten.Button:FindFirstChild("Nightmare")
+                local startBtn = raid.Content.Panel.Outline.Stats.Outline:FindFirstChild("Start")
 
-            if nightmareBtn then
-                print("กด Nightmare")
-                clickButton(nightmareBtn)
-            end
+                if nightmareBtn then
+                    print("กด Nightmare")
+                    clickButton(nightmareBtn)
+                end
 
-            task.wait(0.5)
+                task.wait(0.5)
 
-            if startBtn then
-                print("กด Start")
-                clickButton(startBtn)
+                if startBtn then
+                    print("กด Start")
+                    clickButton(startBtn)
+                end
+
+            else
+                print("UI ไม่ขึ้น")
             end
 
             return
