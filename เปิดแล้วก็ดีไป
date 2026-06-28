@@ -94,7 +94,8 @@ local function WaitForRaidUI(timeout)
 end
 
 
--- 🔥 MAIN LOOP + RETRY 30s
+-- 🔥 MAIN LOOP + RETRY 30s (FIX AFK)
+
 while true do
 
     local success = false
@@ -110,38 +111,55 @@ while true do
 
                 Teleport(zone)
 
-                local raid = WaitForRaidUI(5)
+                local raid = WaitForRaidUI(15)
 
                 if raid then
+
                     task.wait(1.5)
 
                     local nightmareBtn = raid.Content.Panel.Outline.Chrono.ContentButten.Button:FindFirstChild("Nightmare")
                     local startBtn = raid.Content.Panel.Outline.Stats.Outline:FindFirstChild("Start")
 
+
                     if nightmareBtn then
                         print("กด Nightmare")
                         clickButton(nightmareBtn)
+                        task.wait(0.5)
+                    else
+                        print("ไม่เจอปุ่ม Nightmare")
                     end
 
-                    task.wait(0.5)
 
                     if startBtn then
                         print("กด Start")
                         clickButton(startBtn)
+
+                        -- รอให้ระบบเปลี่ยนสถานะก่อน
+                        task.wait(2)
+
+                        success = true
+                        break
+
+                    else
+                        print("ไม่เจอปุ่ม Start")
                     end
 
-                    success = true
-                    break
+
                 else
-                    print("UI ไม่ขึ้น")
+                    print("UI ไม่ขึ้น → หา Zone ใหม่")
                 end
 
-                return
             end
         end
 
+        if success then
+            break
+        end
+
         task.wait(0.2)
+
     end
+
 
     if not success then
         print("⏱ 30 วิยังไม่สำเร็จ → เริ่มใหม่")
@@ -149,4 +167,5 @@ while true do
         print("✅ สำเร็จแล้ว ออกจาก loop")
         break
     end
+
 end
